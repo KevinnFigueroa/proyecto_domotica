@@ -3,12 +3,15 @@
 #include <WebSocketsServer.h>
 #include <string.h>
 #include <ArduinoJson.h>
-#include <PubSubClient.h> 
+#include <PubSubClient.h>
+
+#define MQTTpubQos 2 
 
 // RELES
 #define releSimple 23
 #define releCombinadaDoble 24
-#define releCombinadaTriple 25
+#define releCombinadaTriple 13
+#define releCombinadaTriple2 25
 
 // A DEFINIR
 
@@ -16,16 +19,34 @@
 #define teclaSimple 13
 
 // TECLA COMBINADA DOBLE
-#define teclaCombinadaDoble1 14
-#define teclaCombinadaDoble2 15
+#define teclaCombinadaDoble1 12
+#define teclaCombinadaDoble2 13
 
 // TECLA COMBINADA TRIPLE
-#define teclaCombinadaTriple1 16
+#define teclaCombinadaTriple1 14
 #define teclaCombinadaTriple2 17
-#define teclaCombinadaTriple3 18
+#define teclaCombinadaTriple3 19
 
 
-#define MQTTpubQos 2
+// TECLA COMBINADA TRIPLE 2
+#define teclaCombinadaTriple4 16
+#define teclaCombinadaTriple5 18
+#define teclaCombinadaTriple6 21
+
+// ESTADOS ANTERIORES DE LAS TECLAS COMBINADAS DOBLES
+int beforeStateTeclaDobleValue1 = 0;
+int beforeStateTeclaDobleValue2 = 0;
+
+// ESTADOS ANTERIORES DE LAS TECLAS COMBINADAS TRIPLES
+int beforeStateTeclaTripleValue1 = 0;
+int beforeStateTeclaTripleValue2 = 0;
+int beforeStateTeclaTripleValue3 = 0;
+
+// ESTADOS ANTERIORES DE LAS TECLAS COMBINADAS TRIPLES 2
+int beforeStateTeclaTriple2Value1 = 0;
+int beforeStateTeclaTriple2Value2 = 0;
+int beforeStateTeclaTriple2Value3 = 0;
+
 
 WiFiClient espClient;
 PubSubClient client(espClient);
@@ -58,7 +79,7 @@ const char* topicMqttDevice = "";
 // Esto vendrá hardcodeado dependiendo del dispositivo
 const char* typeOfDevice = "light";
 
- char* configurationDevice = "configuration_device/";
+char* configurationDevice = "configuration_device/";
 
 void decodeMessage(uint8_t num, char* json){
   // Leer Json
@@ -271,7 +292,7 @@ void connectToMqtt(){
 
      // Responder Json
     DynamicJsonDocument response(1024);
-    char responseBuffer[100];
+    char responseBuffer[250];
   
     response["user"] = user;
     response["device"]["room"] = room;
@@ -295,41 +316,61 @@ void setup()
     Serial.begin(115200);
     delay(10);
 
-    pinMode(teclaSimple, INPUT);
-    pinMode(teclaCombinadaDoble1,INPUT);
-    pinMode(teclaCombinadaDoble2,INPUT);
-    pinMode(teclaCombinadaTriple1, INPUT);
-    pinMode(teclaCombinadaTriple2,INPUT);
-    pinMode(teclaCombinadaTriple3,INPUT);
+    //pinMode(teclaSimple, INPUT);
+    
+    //pinMode(teclaCombinadaDoble1,INPUT_PULLUP);
+    //pinMode(teclaCombinadaDoble2,INPUT_PULLUP);
+    
+    // Primer combinacion triple
+    pinMode(teclaCombinadaTriple1,INPUT_PULLUP);
+    pinMode(teclaCombinadaTriple2,INPUT_PULLUP);
+    pinMode(teclaCombinadaTriple3,INPUT_PULLUP);
+
+    // Segunda combinacion triple
+    pinMode(teclaCombinadaTriple4,INPUT_PULLUP);
+    pinMode(teclaCombinadaTriple5,INPUT_PULLUP);
+    pinMode(teclaCombinadaTriple6,INPUT_PULLUP);
 
     // Los pines a los que se va a apuntar deben guardarse en la memoria eeprom 
-    pinMode(releSimple, OUTPUT);
-    pinMode(releCombinadaDoble,OUTPUT);
+    //pinMode(releSimple, OUTPUT);
+    
+    //pinMode(releCombinadaDoble,OUTPUT);
+    
     pinMode(releCombinadaTriple,OUTPUT);
+    
+    pinMode(releCombinadaTriple2,OUTPUT);
 
-    setupWifi(ssid, password);
+  // TOMO TODOS LOS VALORES QUE TIENEN LAS TECLAS AL ENCENDER EL ESP32
+
+    // ESTADOS ANTERIORES DE LAS TECLAS COMBINADAS DOBLES
+    //beforeStateTeclaDobleValue1 = digitalRead(teclaCombinadaDoble1);
+    //beforeStateTeclaDobleValue2 = digitalRead(teclaCombinadaDoble2);
+    
+    // ESTADOS ANTERIORES DE LAS TECLAS COMBINADAS TRIPLES
+    beforeStateTeclaTripleValue1 = digitalRead(teclaCombinadaTriple1);
+    beforeStateTeclaTripleValue2 = digitalRead(teclaCombinadaTriple2);
+    beforeStateTeclaTripleValue3 = digitalRead(teclaCombinadaTriple3);
+    
+    // ESTADOS ANTERIORES DE LAS TECLAS COMBINADAS TRIPLES 2
+    beforeStateTeclaTriple2Value1 = digitalRead(teclaCombinadaTriple4);
+    beforeStateTeclaTriple2Value2 = digitalRead(teclaCombinadaTriple5);
+    beforeStateTeclaTriple2Value3 = digitalRead(teclaCombinadaTriple6);
+
+
+    //setupWifi(ssid, password);
 
     // Vamos a intentar conectarnos en un inicio
     // connectToMqtt();
     
     // start webSocket server
-    webSocket.begin();
-    webSocket.onEvent(webSocketEvent);
+    //webSocket.begin();
+    //webSocket.onEvent(webSocketEvent);
 }
-
-
-// ESTADOS ANTERIORES DE LAS TECLAS COMBINADAS DOBLES
-int beforeStateTeclaDobleValue1 = 0;
-int beforeStateTeclaDobleValue2 = 0;
-
-// ESTADOS ANTERIORES DE LAS TECLAS COMBINADAS TRIPLES
-int beforeStateTeclaTripleValue1 = 0;
-int beforeStateTeclaTripleValue2 = 0;
-int beforeStateTeclaTripleValue3 = 0;
 
 void readLightKeys(){
   // Agregar MQTT A TODOS ESTOS CAMBIOS DE ESTADO, ESCRIBIENDO A LOS TOPICOS
-  
+
+/*
   // Tecla simple
   
   int teclaSimpleValue = digitalRead(teclaSimple);
@@ -341,19 +382,23 @@ void readLightKeys(){
   int teclaDoble2Value = digitalRead(teclaCombinadaDoble2);
 
   if(teclaDoble1Value != beforeStateTeclaDobleValue1 || teclaDoble2Value != beforeStateTeclaDobleValue2){
+    beforeStateTeclaDobleValue1 = digitalRead(teclaCombinadaDoble1);
+    beforeStateTeclaDobleValue2 = digitalRead(teclaCombinadaDoble2);
+
+    
     // Leo en qué estado está la luz
     int val = digitalRead(releCombinadaDoble);
     
     // Cambio al estado contrario al que estaba
-    if(val == 0){
-      digitalWrite(releCombinadaDoble, 0);  
+    if(val == 1){
+      digitalWrite(releCombinadaDoble, LOW);  
     }else{
-      digitalWrite(releCombinadaDoble, 1);
+      digitalWrite(releCombinadaDoble, HIGH);
      }          
     
    }
 
-
+*/
   // Tecla combinada triple
   
   int teclaTriple1Value = digitalRead(teclaCombinadaTriple1);
@@ -362,14 +407,45 @@ void readLightKeys(){
 
 
   if(teclaTriple1Value != beforeStateTeclaTripleValue1 || teclaTriple2Value != beforeStateTeclaTripleValue2 || teclaTriple3Value != beforeStateTeclaTripleValue3){
+   
+   beforeStateTeclaTripleValue1 = digitalRead(teclaCombinadaTriple1);
+   beforeStateTeclaTripleValue2 = digitalRead(teclaCombinadaTriple2);
+   beforeStateTeclaTripleValue3 = digitalRead(teclaCombinadaTriple3);
+    
     // Leo en qué estado está la luz
     int val = digitalRead(releCombinadaTriple);
     
     // Cambio al estado contrario al que estaba
-    if(val == 0){
-      digitalWrite(releCombinadaTriple, 0);  
+    if(val == 1){
+      digitalWrite(releCombinadaTriple, LOW);  
     }else{
-      digitalWrite(releCombinadaTriple, 1);
+      digitalWrite(releCombinadaTriple, HIGH);
+     }          
+    
+   }
+
+
+  // Tecla combinada triple 2
+  
+  int teclaTriple4Value = digitalRead(teclaCombinadaTriple4);
+  int teclaTriple5Value = digitalRead(teclaCombinadaTriple5);
+  int teclaTriple6Value = digitalRead(teclaCombinadaTriple6);
+
+
+  if(teclaTriple4Value != beforeStateTeclaTriple2Value1 || teclaTriple5Value != beforeStateTeclaTriple2Value2 || teclaTriple6Value != beforeStateTeclaTriple2Value3){
+   
+   beforeStateTeclaTriple2Value1 = digitalRead(teclaCombinadaTriple4);
+   beforeStateTeclaTriple2Value2 = digitalRead(teclaCombinadaTriple5);
+   beforeStateTeclaTriple2Value3 = digitalRead(teclaCombinadaTriple6);
+    
+    // Leo en qué estado está la luz
+    int val = digitalRead(releCombinadaTriple2);
+    
+    // Cambio al estado contrario al que estaba
+    if(val == 1){
+      digitalWrite(releCombinadaTriple2, LOW);  
+    }else{
+      digitalWrite(releCombinadaTriple2, HIGH);
      }          
     
    }
@@ -379,9 +455,26 @@ void readLightKeys(){
 
 void loop()
 {
+   
+   Serial.println("Pin 17 ...");
+   Serial.println(digitalRead(17));
+
+   Serial.println("Pin 18 ...");
+   Serial.println(digitalRead(18));
+
+   Serial.println("Pin 19 ...");
+   Serial.println(digitalRead(19));
+
+   Serial.println("Pin 21 ...");
+   Serial.println(digitalRead(21));
+
+   //delay(1000);
+   
+   
    // Control Manual de luces
    readLightKeys();
    // TODO: aqui deberia ir preguntando en un futuro el estado de la conexion a internet, si está conectado entonces prendemos led VERDE y sino EN ROJO.
-   client.loop();
-   webSocket.loop();
+   
+   //client.loop();
+   //webSocket.loop();
 }
