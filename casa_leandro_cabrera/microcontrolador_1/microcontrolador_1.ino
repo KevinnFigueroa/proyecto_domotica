@@ -391,7 +391,7 @@ void readLightKeys(){
   
   int teclaSimpleValue = digitalRead(teclaSimple);
   
-  if(teclaSimpleValue == 1){
+  if(teclaSimpleValue == 0){
       digitalWrite(releSimple, LOW);  
    } else {
       digitalWrite(releSimple, HIGH);
@@ -401,7 +401,7 @@ void readLightKeys(){
   
   int teclaSimpleValue2 = digitalRead(teclaSimple2);
   
-  if(teclaSimpleValue2 == 1) {
+  if(teclaSimpleValue2 == 0) {
       digitalWrite(releSimple2, LOW);  
    } else {
       digitalWrite(releSimple2, HIGH);
@@ -424,9 +424,9 @@ void readLightKeys(){
     int val = digitalRead(releCombinadaTriple);
     
     // Cambio al estado contrario al que estaba
-    if(val == 1){
+    if(val == 1 ){
       digitalWrite(releCombinadaTriple, LOW);  
-    }else{
+    } else{
       digitalWrite(releCombinadaTriple, HIGH);
      }          
     
@@ -450,7 +450,7 @@ void readLightKeys(){
     int val = digitalRead(releCombinadaTriple2);
     
     // Cambio al estado contrario al que estaba
-    if(val == 1){
+    if(val == 1 ){
       digitalWrite(releCombinadaTriple2, LOW);  
     }else{
       digitalWrite(releCombinadaTriple2, HIGH);
@@ -465,6 +465,59 @@ void loop()
 {  
    // Control Manual de luces
    readLightKeys();
+
+  delay(50);
+/*
+   Serial.println("PIN 22 tecla simple");
+   Serial.println(digitalRead(teclaSimple));
+
+   
+   Serial.println("PIN 23 tecla simple 2");
+   Serial.println(digitalRead(teclaSimple2));
+
+   
+   Serial.println("PIN 26 rele simple");
+   Serial.println(digitalRead(teclaSimple));
+
+   
+   Serial.println("PIN 27 rele simple 2");
+   Serial.println(digitalRead(teclaSimple2));
+
+   
+   Serial.println("PIN 14 tecla combinada triple 1");
+   Serial.println(digitalRead(teclaCombinadaTriple1));
+
+   
+   Serial.println("PIN 17 tecla combinada triple 2");
+   Serial.println(digitalRead(teclaCombinadaTriple2));
+
+   
+   Serial.println("PIN 19 tecla combinada triple 3");
+   Serial.println(digitalRead(teclaCombinadaTriple3));
+
+   
+   Serial.println("PIN 13 rele tecla combinada triple 1");
+   Serial.println(digitalRead(releCombinadaTriple));
+
+   
+   Serial.println("PIN 16 tecla combinada triple 4");
+   Serial.println(digitalRead(teclaCombinadaTriple4));
+
+   
+   Serial.println("PIN 18 tecla combinada triple 5");
+   Serial.println(digitalRead(teclaCombinadaTriple5));
+
+   
+   Serial.println("PIN 21 tecla combinada triple 6");
+   Serial.println(digitalRead(teclaCombinadaTriple6));
+
+   
+   Serial.println("PIN 25 rele combinada triple 2");
+   Serial.println(digitalRead(releCombinadaTriple2));
+
+   delay(2000);
+
+   */
    
    // TODO: aqui deberia ir preguntando en un futuro el estado de la conexion a internet, si está conectado entonces prendemos led VERDE y sino EN ROJO.
    
