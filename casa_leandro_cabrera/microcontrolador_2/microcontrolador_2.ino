@@ -4,6 +4,8 @@
 
 */
 
+// Arreglar lo de verificar el estado de las teclas y en base a eso prender o apagar los reles
+
 #include <WiFi.h>
 #include <WebSocketsServer.h>
 #include <string.h>
@@ -16,13 +18,13 @@
 
 #define releSimple 13
 
-#define releSimple2 27
+#define releSimple2 25
 
 #define releSimple3 32
 
 #define releSimple4 26
 
-#define releCombinadaDoble 25
+#define releCombinadaDoble 27
 
 /* --- FIN RELES --- */
 
@@ -50,6 +52,12 @@
 
 /* --- ESTADOS ANTERIORES DE LAS TECLAS  --- */
 
+// ESTADOS ANTERIORES DE LAS TECLAS SIMPLES
+int beforeStateTeclaSimple = 0;
+int beforeStateTeclaSimple2 = 0;
+int beforeStateTeclaSimple3 = 0;
+int beforeStateTeclaSimple4 = 0;
+
 // ESTADOS ANTERIORES DE LAS TECLAS COMBINADAS DOBLES
 int beforeStateTeclaDobleValue1 = 0;
 int beforeStateTeclaDobleValue2 = 0;
@@ -62,8 +70,8 @@ WebSocketsServer webSocket = WebSocketsServer(81);
 
 
 // Esto debe guardarse en la memoria EEPROM para restaurar internet en caso de corte de luz
-const char* ssid = "";
-const char* password = "";
+const char* ssid = "Familia Figueroa";
+const char* password = "18520182kevin";
 
 // MQTT Broker
 const char *mqtt_broker = "192.168.0.16";
@@ -74,7 +82,7 @@ const char *will_topic = "";
 const int mqtt_port = 1883;
 
 // Esto debe tener un id Unico para identificar como red unica
-const char* APssid = "Access Point Esp32";
+const char* APssid = "Dómotica casa leandro cabrera";
 const char* APpassword = "12345678";
 
 // IDENTIDAD DEL DISPOSITIVO, Esto se va a devolver cada vez que la app se sincronice por WS llamando al evento /device_information
@@ -82,6 +90,7 @@ const char* APpassword = "12345678";
 const char* user = "";
 const char* room = "";
 
+// Este tópico va a ser hardcodeado
 const char* topicMqttDevice = "";
 
 // Esto vendrá hardcodeado dependiendo del dispositivo
@@ -324,17 +333,17 @@ void setup()
     Serial.begin(115200);
     delay(10);
 
-    pinMode(teclaSimple, INPUT_PULLUP);
+    pinMode(teclaSimple, INPUT_PULLDOWN);
 
-    pinMode(teclaSimple2, INPUT_PULLUP);
+    pinMode(teclaSimple2, INPUT_PULLDOWN);
 
-    pinMode(teclaSimple3, INPUT_PULLUP);
+    pinMode(teclaSimple3, INPUT_PULLDOWN);
 
-    pinMode(teclaSimple4, INPUT_PULLUP);
+    pinMode(teclaSimple4, INPUT_PULLDOWN);
 
     
-    pinMode(teclaCombinadaDoble, INPUT_PULLUP);
-    pinMode(teclaCombinadaDoble2, INPUT_PULLUP);
+    pinMode(teclaCombinadaDoble, INPUT_PULLDOWN);
+    pinMode(teclaCombinadaDoble2, INPUT_PULLDOWN);
     
     // Los pines a los que se va a apuntar deben guardarse en la memoria eeprom 
     pinMode(releSimple, OUTPUT);
@@ -350,9 +359,7 @@ void setup()
   
     // TOMO TODOS LOS VALORES QUE TIENEN LAS TECLAS AL ENCENDER EL ESP32
 
-    // ESTADOS ANTERIORES DE LAS TECLAS COMBINADAS DOBLES
-    beforeStateTeclaDobleValue1 = digitalRead(teclaCombinadaDoble);
-    beforeStateTeclaDobleValue2 = digitalRead(teclaCombinadaDoble2);
+    //initLights();
     
     //setupWifi(ssid, password);
 
@@ -364,71 +371,120 @@ void setup()
     //webSocket.onEvent(webSocketEvent);
 }
 
+bool checkParOImpar(int num){
+  if (num % 2 == 0) { 
+    return true;
+  }
+  else {
+    return false;
+  }
+}
+
+void initLights(){
+    // ESTADOS ANTERIORES DE LAS TECLAS COMBINADAS DOBLES
+    //beforeStateTeclaDobleValue1 = digitalRead(teclaCombinadaDoble);
+    //beforeStateTeclaDobleValue2 = digitalRead(teclaCombinadaDoble2);
+    
+    //int suma = beforeStateTeclaDobleValue1 + beforeStateTeclaDobleValue2;
+     
+    //if(checkParOImpar(suma)){
+    //  digitalWrite(releCombinadaDoble, LOW);
+    //} else{
+    //  digitalWrite(releCombinadaDoble, HIGH);
+    //}
+    
+    // ESTADOS ANTERIORES DE LAS TECLAS SIMPLES
+    beforeStateTeclaSimple = digitalRead(teclaSimple);
+    beforeStateTeclaSimple2 = digitalRead(teclaSimple2);
+    beforeStateTeclaSimple3 = digitalRead(teclaSimple3);
+    beforeStateTeclaSimple4 = digitalRead(teclaSimple4);
+}
+
 void readLightKeys(){
   // Agregar MQTT A TODOS ESTOS CAMBIOS DE ESTADO, ESCRIBIENDO A LOS TOPICOS
-
+  
   // Tecla simple 
   
   int teclaSimpleValue = digitalRead(teclaSimple);
-  
-  if(teclaSimpleValue == 1){
-      digitalWrite(releSimple, LOW);  
-   } else {
-      digitalWrite(releSimple, HIGH);
-   }  
+
+  if(teclaSimpleValue != beforeStateTeclaSimple) {
+    beforeStateTeclaSimple = digitalRead(teclaSimple);
+
+    if(teclaSimpleValue == 0){
+        digitalWrite(releSimple, LOW);  
+     } else {
+        digitalWrite(releSimple, HIGH);
+     }
+  }
 
   // Tecla simple 2
   
   int teclaSimpleValue2 = digitalRead(teclaSimple2);
   
-  if(teclaSimpleValue2 == 1){
-      digitalWrite(releSimple2, LOW);  
-   } else {
-      digitalWrite(releSimple2, HIGH);
-   }  
+  if(teclaSimpleValue2 != beforeStateTeclaSimple2) {
+    beforeStateTeclaSimple2 = digitalRead(teclaSimple2);
+
+    if(teclaSimpleValue2 == 0){
+        digitalWrite(releSimple2, LOW);  
+     } else {
+        digitalWrite(releSimple2, HIGH);
+     }
+  }
 
   // Tecla simple 3
   
   int teclaSimpleValue3 = digitalRead(teclaSimple3);
   
-  if(teclaSimpleValue3 == 1){
-      digitalWrite(releSimple3, LOW);  
-   } else {
-      digitalWrite(releSimple3, HIGH);
-   }  
+  if(teclaSimpleValue3 != beforeStateTeclaSimple3) {
+    beforeStateTeclaSimple3 = digitalRead(teclaSimple3);
+
+    if(teclaSimpleValue3 == 0){
+        digitalWrite(releSimple3, LOW);  
+     } else {
+        digitalWrite(releSimple3, HIGH);
+     }
+  }
 
   // Tecla simple 
   
   int teclaSimpleValue4 = digitalRead(teclaSimple4);
   
-  if(teclaSimpleValue4 == 1){
-      digitalWrite(releSimple4, LOW);  
-   } else {
-      digitalWrite(releSimple4, HIGH);
-   }  
+  if(teclaSimpleValue4 != beforeStateTeclaSimple4) {
+    beforeStateTeclaSimple4 = digitalRead(teclaSimple4);
+
+    if(teclaSimpleValue4 == 0) {
+        digitalWrite(releSimple4, LOW);  
+     } else {
+        digitalWrite(releSimple4, HIGH);
+     }
+  }
+  
+
+  
   
    
   // Tecla combinada doble
 
   int teclaDoble1Value = digitalRead(teclaCombinadaDoble);
   int teclaDoble2Value = digitalRead(teclaCombinadaDoble2);
-
+  
+  
   if(teclaDoble1Value != beforeStateTeclaDobleValue1 || teclaDoble2Value != beforeStateTeclaDobleValue2){
     beforeStateTeclaDobleValue1 = digitalRead(teclaCombinadaDoble);
     beforeStateTeclaDobleValue2 = digitalRead(teclaCombinadaDoble2);
 
-    
     // Leo en qué estado está la luz
     int val = digitalRead(releCombinadaDoble);
     
     // Cambio al estado contrario al que estaba
-    if(val == 1){
+    if(val == 1) {
       digitalWrite(releCombinadaDoble, LOW);  
-    }else{
+    } else{
       digitalWrite(releCombinadaDoble, HIGH);
      }          
     
    }
+   
 
 }
 
@@ -437,6 +493,34 @@ void loop()
 {
    // Control Manual de luces
    readLightKeys();
+   //delay(50);
+
+  /*
+   
+   Serial.println("PIN 14 tecla simple");
+   Serial.println(digitalRead(teclaSimple));
+
+   
+   Serial.println("PIN 17 tecla simple 2");
+   Serial.println(digitalRead(teclaSimple2));
+
+   
+   Serial.println("PIN 19 rele simple 3");
+   Serial.println(digitalRead(teclaSimple3));
+
+   
+   Serial.println("PIN 21 rele simple 4");
+   Serial.println(digitalRead(teclaSimple4));
+
+   
+   Serial.println("PIN 16 tecla combinada doble 1");
+   Serial.println(digitalRead(teclaCombinadaDoble));
+
+   
+   Serial.println("PIN 18 tecla combinada doble 2");
+   Serial.println(digitalRead(teclaCombinadaDoble2));
+
+ */
    
    // TODO: aqui deberia ir preguntando en un futuro el estado de la conexion a internet, si está conectado entonces prendemos led VERDE y sino EN ROJO.
    

@@ -61,6 +61,10 @@
 
 /* --- ESTADOS ANTERIORES DE LAS TECLAS  --- */
 
+// ESTADOS ANTERIORES DE LAS TECLAS SIMPLES
+int beforeStateTeclaSimple = 0;
+int beforeStateTeclaSimple2 = 0;
+
 // ESTADOS ANTERIORES DE LAS TECLAS COMBINADAS TRIPLES
 int beforeStateTeclaTripleValue1 = 0;
 int beforeStateTeclaTripleValue2 = 0;
@@ -70,6 +74,8 @@ int beforeStateTeclaTripleValue3 = 0;
 int beforeStateTeclaTriple2Value1 = 0;
 int beforeStateTeclaTriple2Value2 = 0;
 int beforeStateTeclaTriple2Value3 = 0;
+
+
 
 /* --- FIN ESTADOS ANTERIORES DE LAS TECLAS  --- */
 
@@ -308,6 +314,8 @@ void connectToMqtt(){
      }
  }
 
+
+// HAY QUE VERIFICA SI SOLO DEBO SUSCRIBIRME A TOPICO O DEBO CONFIGURAR 
  if(retryConnections != 4) {
    Serial.print("Suscribiendome y publicando en topico ");
    Serial.print(topic);
@@ -332,6 +340,48 @@ void connectToMqtt(){
   
 }
 
+bool checkParOImpar(int num){
+  if (num % 2 == 0) { 
+    return true;
+  }
+  else {
+    return false;
+  }
+}
+
+
+void initLights(){
+    // ESTADOS ANTERIORES DE LAS TECLAS COMBINADAS TRIPLES
+    beforeStateTeclaTripleValue1 = digitalRead(teclaCombinadaTriple1);
+    beforeStateTeclaTripleValue2 = digitalRead(teclaCombinadaTriple2);
+    beforeStateTeclaTripleValue3 = digitalRead(teclaCombinadaTriple3);
+
+    int suma1 = beforeStateTeclaTripleValue1 + beforeStateTeclaTripleValue2 + beforeStateTeclaTripleValue3;
+     
+    if(checkParOImpar(suma1)){
+      digitalWrite(releCombinadaTriple, LOW);
+    } else{
+      digitalWrite(releCombinadaTriple, HIGH);
+    }
+
+    // ESTADOS ANTERIORES DE LAS TECLAS COMBINADAS TRIPLES
+    beforeStateTeclaTriple2Value1 = digitalRead(teclaCombinadaTriple4);
+    beforeStateTeclaTriple2Value2 = digitalRead(teclaCombinadaTriple5);
+    beforeStateTeclaTriple2Value3 = digitalRead(teclaCombinadaTriple6);
+
+    int suma2 = beforeStateTeclaTriple2Value1 + beforeStateTeclaTriple2Value2 + beforeStateTeclaTriple2Value3;
+     
+    if(checkParOImpar(suma2)){
+      digitalWrite(releCombinadaTriple2, LOW);
+    } else{
+      digitalWrite(releCombinadaTriple2, HIGH);
+    }
+    
+    // ESTADOS ANTERIORES DE LAS TECLAS SIMPLES
+    beforeStateTeclaSimple = digitalRead(teclaSimple);
+    beforeStateTeclaSimple2 = digitalRead(teclaSimple2);
+}
+
 void setup()
 {
 
@@ -339,18 +389,18 @@ void setup()
     delay(10);
 
     // BAÑO 
-    pinMode(teclaSimple, INPUT_PULLUP);
-    pinMode(teclaSimple2, INPUT_PULLUP);
+    pinMode(teclaSimple, INPUT_PULLDOWN);
+    pinMode(teclaSimple2, INPUT_PULLDOWN);
     
     // Primer combinacion triple
-    pinMode(teclaCombinadaTriple1,INPUT_PULLUP);
-    pinMode(teclaCombinadaTriple2,INPUT_PULLUP);
-    pinMode(teclaCombinadaTriple3,INPUT_PULLUP);
+    pinMode(teclaCombinadaTriple1,INPUT_PULLDOWN);
+    pinMode(teclaCombinadaTriple2,INPUT_PULLDOWN);
+    pinMode(teclaCombinadaTriple3,INPUT_PULLDOWN);
 
     // Segunda combinacion triple
-    pinMode(teclaCombinadaTriple4,INPUT_PULLUP);
-    pinMode(teclaCombinadaTriple5,INPUT_PULLUP);
-    pinMode(teclaCombinadaTriple6,INPUT_PULLUP);
+    pinMode(teclaCombinadaTriple4,INPUT_PULLDOWN);
+    pinMode(teclaCombinadaTriple5,INPUT_PULLDOWN);
+    pinMode(teclaCombinadaTriple6,INPUT_PULLDOWN);
 
     // Los pines a los que se va a apuntar deben guardarse en la memoria eeprom 
     
@@ -362,17 +412,7 @@ void setup()
     
     pinMode(releCombinadaTriple2,OUTPUT);
 
-    // TOMO TODOS LOS VALORES QUE TIENEN LAS TECLAS AL ENCENDER EL ESP32
-    // ESTADOS ANTERIORES DE LAS TECLAS COMBINADAS TRIPLES
-    beforeStateTeclaTripleValue1 = digitalRead(teclaCombinadaTriple1);
-    beforeStateTeclaTripleValue2 = digitalRead(teclaCombinadaTriple2);
-    beforeStateTeclaTripleValue3 = digitalRead(teclaCombinadaTriple3);
-    
-    // ESTADOS ANTERIORES DE LAS TECLAS COMBINADAS TRIPLES 2
-    beforeStateTeclaTriple2Value1 = digitalRead(teclaCombinadaTriple4);
-    beforeStateTeclaTriple2Value2 = digitalRead(teclaCombinadaTriple5);
-    beforeStateTeclaTriple2Value3 = digitalRead(teclaCombinadaTriple6);
-
+    initLights();
 
     //setupWifi(ssid, password);
 
@@ -391,21 +431,29 @@ void readLightKeys(){
   
   int teclaSimpleValue = digitalRead(teclaSimple);
   
-  if(teclaSimpleValue == 0){
-      digitalWrite(releSimple, LOW);  
-   } else {
-      digitalWrite(releSimple, HIGH);
-   }  
+  if(teclaSimpleValue != beforeStateTeclaSimple) {
+    beforeStateTeclaSimple = digitalRead(teclaSimple);
+
+    if(teclaSimpleValue == 0){
+        digitalWrite(releSimple, LOW);  
+     } else {
+        digitalWrite(releSimple, HIGH);
+     }
+  }
 
   // Tecla simple 2
   
   int teclaSimpleValue2 = digitalRead(teclaSimple2);
   
-  if(teclaSimpleValue2 == 0) {
-      digitalWrite(releSimple2, LOW);  
-   } else {
-      digitalWrite(releSimple2, HIGH);
-   }  
+  if(teclaSimpleValue2 != beforeStateTeclaSimple2) {
+    beforeStateTeclaSimple2 = digitalRead(teclaSimple2);
+
+    if(teclaSimpleValue2 == 0){
+        digitalWrite(releSimple2, LOW);  
+     } else {
+        digitalWrite(releSimple2, HIGH);
+     }
+  }
 
   // Tecla combinada triple
   
@@ -466,8 +514,8 @@ void loop()
    // Control Manual de luces
    readLightKeys();
 
-  delay(50);
-/*
+  //delay(2000);
+
    Serial.println("PIN 22 tecla simple");
    Serial.println(digitalRead(teclaSimple));
 
@@ -515,9 +563,9 @@ void loop()
    Serial.println("PIN 25 rele combinada triple 2");
    Serial.println(digitalRead(releCombinadaTriple2));
 
-   delay(2000);
+   //delay(2000);
 
-   */
+   
    
    // TODO: aqui deberia ir preguntando en un futuro el estado de la conexion a internet, si está conectado entonces prendemos led VERDE y sino EN ROJO.
    
